@@ -1,0 +1,20 @@
+query MusicFiles {
+    musicFiles(first: -1) {
+        edges {
+            node {
+                id
+                path
+                trackName
+                trackSortOrder
+                artistName
+                artistSortOrder
+                albumName
+                albumSortOrder
+                duration
+                hash
+                lrcx: lyricsText(ext: "lrcx")
+                lrc: lyricsText(ext: "lrc")
+            }
+        }
+    }
+}

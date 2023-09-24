@@ -1,0 +1,13 @@
+query MusicFile($id: Int!) {
+    musicFile(id: $id) {
+        id
+        trackName
+        artistName
+        albumName
+        path
+        hasCover
+        hash
+        lrcx: lyricsText(ext: "lrcx")
+        lrc: lyricsText(ext: "lrc")
+    }
+}

@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Lyricova Jukebox</string>
+    <string name="tracks">Tracks</string>
+    <string name="settings">Settings</string>
+    <string name="JwtToken">JWT Token</string>
+    <string name="Save">Save</string>
+    <string name="Cancel">Cancel</string>
+    <string name="JwtTokenNotSet">JWT Token not set.</string>
+    <string name="JwtTokenInvalid">JWT token is invalid.</string>
+    <string name="JwtTokenExpiry">JWT Token expires %s.</string>
+    <string name="SyncData">Sync data</string>
+    <string name="sync_in_progress">Sync in progress…</string>
+    <string name="sync_notification_channel_name">Sync notifications</string>
+    <string name="cancel">Cancel</string>
+    <string name="sync_complete_notification">{0, plural, \n    one {# file} \n    other {# files}\n} processed, {1, plural, \n    one {# file} \n    other {# files}\n} downloaded.</string>
+    <string name="sync_complete_title">Sync complete</string>
+    <string name="sync_preparing">Sync preparing…</string>
+    <string name="sync_failed">Sync failed</string>
+    <string name="sync_processing_changes_count">Processing {0} / {1, plural, one{# change} other{# changes}}…</string>
+    <string name="sync_downloading_count">Downloading {0} / {1, plural, one{# change} other{# changes}}…</string>
+    <string name="player">Player</string>
+</resources>
