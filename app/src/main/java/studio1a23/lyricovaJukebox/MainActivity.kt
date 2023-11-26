@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
-    @androidx.media3.common.util.UnstableApi
+    @UnstableApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -121,7 +121,7 @@ class MainActivity : ComponentActivity() {
                         val bottomInset = with(density) { windowsInsets.getBottom(density).toDp() }
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-                        var active by rememberSaveable {
+                        val active by rememberSaveable {
                             mutableStateOf(false)
                         }
 
