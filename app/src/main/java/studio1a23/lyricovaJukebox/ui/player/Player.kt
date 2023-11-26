@@ -10,24 +10,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.ui.PlayerView
 import studio1a23.lyricovaJukebox.LocalPlayerAwareWindowInsets
+import studio1a23.lyricovaJukebox.LocalPlayerConnection
 import studio1a23.lyricovaJukebox.R
 
 @Composable
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 fun Player(
     modifier: Modifier = Modifier,
-    viewModel: PlayerViewModel = hiltViewModel<PlayerViewModel>(),
 ) {
+    val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
 
     Column(modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom))) {
         Text("Player", color = MaterialTheme.colorScheme.onBackground)
         AndroidView(factory = {
             PlayerView(context).apply {
-                player = viewModel.player
+                player = playerConnection.player
                 defaultArtwork = resources.getDrawable(R.drawable.notification_icon_small, null)
                 controllerHideOnTouch = false
                 showController()

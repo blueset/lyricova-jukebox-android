@@ -28,11 +28,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import coil.imageLoader
 import coil.request.ImageRequest
-import studio1a23.lyricovaJukebox.ui.player.PlayerViewModel
+import studio1a23.lyricovaJukebox.LocalPlayerConnection
 import studio1a23.lyricovaJukebox.util.TAG
 
 private val DarkColorScheme = darkColorScheme(
@@ -82,34 +81,38 @@ fun JukeboxTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
-    playerViewModel: PlayerViewModel = viewModel<PlayerViewModel>(),
     content: @Composable () -> Unit
 ) {
     var themeColor by rememberSaveable(stateSaver = ColorSaver) {
         mutableStateOf(Color.Unspecified)
     }
 
-    val currentMetadata = playerViewModel.currentMediaMetadata.collectAsState()
-
+    val currentMetadata = LocalPlayerConnection.current?.currentMediaMetadata?.collectAsState()
     val context = LocalContext.current
     val imageLoader = LocalContext.current.imageLoader
 
-    Log.d("Theme", "Rerender, current metadata: ${currentMetadata.value?.artworkUri}")
-    LaunchedEffect(currentMetadata.value?.artworkUri) {
-        Log.d(TAG, "Launched effect: current metadata changed, ${currentMetadata.value?.artworkUri}")
-        val metadata = currentMetadata.value
-            themeColor = if (metadata?.artworkUri == null) {
-                Color.Unspecified
-            } else {
-                val result = imageLoader.execute (
-                    ImageRequest.Builder(context)
-                        .data(metadata.artworkUri)
-                        .allowHardware(false) // pixel access is not supported on Config#HARDWARE bitmaps
-                        .build()
-                )
-                (result.drawable as? BitmapDrawable)?.bitmap?.extractThemeColor()
-                    ?: Color.Unspecified
-            }
+    Log.d("Theme", "Rerender theme, current metadata: ${currentMetadata?.value?.artworkUri}")
+    LaunchedEffect(currentMetadata?.value?.artworkUri) {
+        Log.d(
+            TAG,
+            "Launched effect theme: current metadata changed, ${currentMetadata?.value?.artworkUri}"
+        )
+        val metadata = currentMetadata?.value
+        themeColor = if (metadata?.artworkUri == null) {
+            Log.d(TAG, "Launched effect theme: color = undefined")
+            Color.Unspecified
+        } else {
+            val result = imageLoader.execute(
+                ImageRequest.Builder(context)
+                    .data(metadata.artworkUri)
+                    .allowHardware(false) // pixel access is not supported on Config#HARDWARE bitmaps
+                    .build()
+            )
+            val bitmap = (result.drawable as? BitmapDrawable)?.bitmap
+            val color = bitmap?.extractThemeColor()
+            Log.d(TAG, "Launched effect theme: color = $color, bitmap = $bitmap")
+            color ?: Color.Unspecified
+        }
     }
 
     val colorScheme = when {
@@ -118,6 +121,7 @@ fun JukeboxTheme(
             LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

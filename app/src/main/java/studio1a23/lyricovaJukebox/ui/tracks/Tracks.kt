@@ -40,10 +40,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
+import studio1a23.lyricovaJukebox.LocalPlayerConnection
 import studio1a23.lyricovaJukebox.data.musicFile.MusicFileEntity
 import studio1a23.lyricovaJukebox.data.musicFile.toMediaItem
 import studio1a23.lyricovaJukebox.services.MediaItemIds
-import studio1a23.lyricovaJukebox.ui.player.PlayerViewModel
 import java.text.Normalizer
 
 @Composable
@@ -198,8 +198,8 @@ fun SectionSelectorPreview() {
 fun Tracks(
     modifier: Modifier = Modifier,
     viewModel: TracksViewModel = hiltViewModel<TracksViewModel>(),
-    playerViewModel: PlayerViewModel = hiltViewModel<PlayerViewModel>(),
 ) {
+    val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
     val openSelectorDialog = remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -227,7 +227,7 @@ fun Tracks(
             items(musicFiles) { musicFile ->
                 TrackItem(musicFile, onClick = {
                     musicFile.toMediaItem("${MediaItemIds.SONG}/")?.let {
-                        playerViewModel.playFromItem(it)
+                        playerConnection.playFromItem(it)
                     }
                 })
             }

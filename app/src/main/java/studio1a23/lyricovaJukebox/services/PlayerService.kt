@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Binder
 import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.util.Assertions
@@ -37,8 +38,9 @@ import javax.inject.Inject
 @UnstableApi
 @AndroidEntryPoint
 class PlayerService : MediaLibraryService() {
-    private var player: ExoPlayer? = null
+    lateinit var player: ExoPlayer
     private var mediaLibrarySession: MediaLibrarySession? = null
+    private val binder = PlayerServiceBinder()
 
     @Inject
     lateinit var callback: MediaLibrarySessionCallback
@@ -51,7 +53,7 @@ class PlayerService : MediaLibraryService() {
             .setAudioAttributes(AudioAttributes.DEFAULT, true)
             .setHandleAudioBecomingNoisy(true)
             .build()
-        mediaLibrarySession = MediaLibrarySession.Builder(this, player!!, callback)
+        mediaLibrarySession = MediaLibrarySession.Builder(this, player, callback)
             .setSessionActivity(
                 PendingIntent.getActivity(
                     this,
@@ -76,6 +78,13 @@ class PlayerService : MediaLibraryService() {
             mediaLibrarySession = null
         }
         super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?) = super.onBind(intent) ?: binder
+
+    inner class PlayerServiceBinder : Binder() {
+        val service: PlayerService
+            get() = this@PlayerService
     }
 }
 
