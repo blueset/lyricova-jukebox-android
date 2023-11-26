@@ -37,6 +37,7 @@ class PlayerViewModel @Inject constructor(
     val currentMediaMetadata = MutableStateFlow<MediaMetadata?>(null)
 
     var player: MediaController? = null
+    var isPlaying = MutableStateFlow(false)
 
     init {
         val sessionToken =
@@ -45,10 +46,12 @@ class PlayerViewModel @Inject constructor(
 
         controllerFuture.addListener(
             /* listener = */ {
-                player = controllerFuture.get()
+                val playerObj = controllerFuture.get()
+                player = playerObj
                 // player.addListener(listener)
-                player?.prepare()
-                player?.addListener(this)
+                playerObj.prepare()
+                playerObj.addListener(this)
+                isPlaying.value = playerObj.isPlaying
 
 //                viewModelScope.launch {
 //                    while (isActive) {
@@ -66,6 +69,11 @@ class PlayerViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         player?.release()
+    }
+
+    override fun onPlaybackStateChanged(state: Int) {
+//        error.value = player.playerError
+        Log.d(TAG, "onPlaybackStateChanged: $state")
     }
 
     fun playFromItem(item: MediaItem) {
@@ -122,7 +130,11 @@ class PlayerViewModel @Inject constructor(
 
     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
         currentMediaMetadata.value = mediaMetadata.buildUpon()
-            .setArtworkUri(getCoverArtUri(mediaMetadata.extras?.getInt("lyricova.musicFileId") ?: return, appContext))
+            .setArtworkUri(
+                getCoverArtUri(
+                    mediaMetadata.extras?.getInt("lyricova.musicFileId") ?: return, appContext
+                )
+            )
             .build()
         Log.d(
             TAG,
@@ -131,11 +143,21 @@ class PlayerViewModel @Inject constructor(
     }
 
     override fun onEvents(player: Player, events: Player.Events) {
+        val eventFlags = buildList {
+            for (i in 0 until events.size()) {
+                add(events.get(i))
+            }
+        }
+        Log.d(TAG, "onEvents: $events, $eventFlags")
         if (events.containsAny(
                 Player.EVENT_TIMELINE_CHANGED,
                 Player.EVENT_POSITION_DISCONTINUITY
             )
         ) {
+            // TODO: events
+        } else if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
+            Log.d(TAG, "EVENT_IS_PLAYING_CHANGED: ${player.isPlaying}")
+            isPlaying.value = player.isPlaying
         } else {
             super.onEvents(player, events)
         }

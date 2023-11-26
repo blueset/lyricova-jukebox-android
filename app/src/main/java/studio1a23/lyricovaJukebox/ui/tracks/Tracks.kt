@@ -73,7 +73,7 @@ fun TrackHeader(label: String, modifier: Modifier = Modifier) {
             .padding(16.dp, 4.dp)
             .fillMaxWidth()
     ) {
-        Text(label)
+        Text(label, color = MaterialTheme.colorScheme.onBackground)
     }
 }
 
@@ -194,6 +194,7 @@ fun SectionSelectorPreview() {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
+@androidx.media3.common.util.UnstableApi
 fun Tracks(
     modifier: Modifier = Modifier,
     viewModel: TracksViewModel = hiltViewModel<TracksViewModel>(),

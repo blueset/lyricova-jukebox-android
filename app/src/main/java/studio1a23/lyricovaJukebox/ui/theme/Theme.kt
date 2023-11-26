@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import coil.imageLoader
 import coil.request.ImageRequest
 import studio1a23.lyricovaJukebox.ui.player.PlayerViewModel
@@ -76,6 +77,7 @@ private object AccentRippleTheme : RippleTheme {
 }
 
 @Composable
+@UnstableApi
 fun JukeboxTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
