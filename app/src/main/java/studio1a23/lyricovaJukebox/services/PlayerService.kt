@@ -9,6 +9,8 @@ import android.net.Uri
 import android.os.Binder
 import android.util.Log
 import androidx.media3.common.AudioAttributes
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.common.util.Assertions
 import androidx.media3.common.util.BitmapLoader
 import androidx.media3.common.util.UnstableApi
@@ -29,7 +31,9 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListeningExecutorService
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
 import studio1a23.lyricovaJukebox.MainActivity
+import studio1a23.lyricovaJukebox.providers.getCoverArtUri
 import studio1a23.lyricovaJukebox.util.TAG
 import java.io.IOException
 import java.util.concurrent.Executors
@@ -37,7 +41,7 @@ import javax.inject.Inject
 
 @UnstableApi
 @AndroidEntryPoint
-class PlayerService : MediaLibraryService() {
+class PlayerService : MediaLibraryService(), Player.Listener {
     lateinit var player: ExoPlayer
     private var mediaLibrarySession: MediaLibrarySession? = null
     private val binder = PlayerServiceBinder()
@@ -47,12 +51,15 @@ class PlayerService : MediaLibraryService() {
 
     lateinit var notificationProvider: MediaNotification.Provider
 
+    val currentMediaMetadata = MutableStateFlow<MediaMetadata?>(null)
+
     override fun onCreate() {
         super.onCreate()
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(AudioAttributes.DEFAULT, true)
             .setHandleAudioBecomingNoisy(true)
             .build()
+        player.addListener(this)
         mediaLibrarySession = MediaLibrarySession.Builder(this, player, callback)
             .setSessionActivity(
                 PendingIntent.getActivity(
@@ -66,6 +73,20 @@ class PlayerService : MediaLibraryService() {
             .build()
         notificationProvider = DefaultMediaNotificationProvider(applicationContext)
         setMediaNotificationProvider(notificationProvider)
+    }
+
+    override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+        currentMediaMetadata.value = mediaMetadata.buildUpon()
+            .setArtworkUri(
+                getCoverArtUri(
+                    mediaMetadata.extras?.getInt("lyricova.musicFileId") ?: return, this
+                )
+            )
+            .build()
+        Log.d(
+            TAG,
+            "onMediaMetadataChanged: $mediaMetadata, ${currentMediaMetadata.value?.artworkUri}"
+        )
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? =
@@ -105,7 +126,7 @@ class DataSourceBitmapLoader
      * loading tasks to a [Executors.newSingleThreadExecutor].
      */
     constructor(context: Context?) : this(
-        Assertions.checkStateNotNull<ListeningExecutorService>(DataSourceBitmapLoader.Companion.DEFAULT_EXECUTOR_SERVICE.get()),
+        Assertions.checkStateNotNull<ListeningExecutorService>(DEFAULT_EXECUTOR_SERVICE.get()),
         DefaultDataSource.Factory(
             context!!
         )

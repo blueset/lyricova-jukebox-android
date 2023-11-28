@@ -9,6 +9,7 @@ import android.database.Cursor
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -16,8 +17,8 @@ import dagger.hilt.components.SingletonComponent
 import studio1a23.lyricovaJukebox.data.musicFile.MusicFileRepo
 import studio1a23.lyricovaJukebox.data.musicFile.toUri
 import studio1a23.lyricovaJukebox.services.MediaItemIds.NODE_PREFIX
-import java.io.ByteArrayInputStream
-import java.io.InputStream
+import studio1a23.lyricovaJukebox.util.TAG
+import kotlin.concurrent.thread
 
 
 private const val AUTHORITY = NODE_PREFIX + "coverArtProvider"
@@ -96,10 +97,15 @@ class CoverArtProvider : ContentProvider() {
                 val song = musicFileRepo.getMediaFile(songId)
                 val mediaMetadataRetriever = MediaMetadataRetriever()
                 mediaMetadataRetriever.setDataSource(appContext, song.toUri())
-                val embeddedPicture = mediaMetadataRetriever.embeddedPicture ?: return null
-                val cursor = android.database.MatrixCursor(arrayOf("data"))
-                cursor.addRow(arrayOf(embeddedPicture))
-                return cursor
+                try {
+                    val embeddedPicture = mediaMetadataRetriever.embeddedPicture ?: return null
+                    val cursor = android.database.MatrixCursor(arrayOf("data"))
+                    cursor.addRow(arrayOf(embeddedPicture))
+                    return cursor
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to get embedded picture", e)
+                    return null
+                }
             }
 
             else -> return null
@@ -121,19 +127,21 @@ class CoverArtProvider : ContentProvider() {
                 val mediaMetadataRetriever = MediaMetadataRetriever()
                 mediaMetadataRetriever.setDataSource(appContext, song.toUri())
                 val embeddedPicture = mediaMetadataRetriever.embeddedPicture ?: return null
-                val (inDesc, outDesc) = ParcelFileDescriptor.createPipe()
-                val inputStream: InputStream = ByteArrayInputStream(embeddedPicture)
-                val outputStream = ParcelFileDescriptor.AutoCloseOutputStream(outDesc)
-                var len: Int
-                while (inputStream.read().also { len = it } >= 0) {
-                    outputStream.write(len)
+                val (readablePipe, writablePipe) = ParcelFileDescriptor.createPipe()
+
+                thread(start = true) {
+                    try {
+                        val outputStream = ParcelFileDescriptor.AutoCloseOutputStream(writablePipe)
+                        outputStream.write(embeddedPicture)
+                        outputStream.flush()
+                        outputStream.close()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to write embedded picture", e)
+                    }
                 }
-                inputStream.close()
-                outputStream.flush()
-                outputStream.close()
                 // Return the ParcelFileDescriptor input stream to the calling activity in order to read
                 // the file data.
-                return inDesc
+                return readablePipe
             }
 
             else -> return null

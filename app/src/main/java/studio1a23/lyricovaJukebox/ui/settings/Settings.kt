@@ -20,10 +20,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.util.UnstableApi
 import androidx.work.WorkInfo
 import studio1a23.lyricovaJukebox.R
 import studio1a23.lyricovaJukebox.data.preference.UserPreferences
@@ -199,8 +201,9 @@ fun Settings(
     uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
+@UnstableApi
 fun SettingsPreview() {
-    JukeboxTheme {
+    JukeboxTheme(Color.Unspecified) {
         Column {
             ListItem(
                 headlineContent = { Text(MessageFormat.format("{0, plural, one {# file} other {# files}} processed, {1, plural, one {# file} other {# files}} downloaded.", 10, 1)) },

@@ -78,7 +78,7 @@ concurrentFutures = { group = "androidx.concurrent", name = "concurrent-futures"
 kotlinxCoroutinesGuava = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-guava", version = "1.6.0" }
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 palette = { group = "androidx.palette", name = "palette", version = "1.0.0" }
-coil = { group = "io.coil-kt", name = "coil", version = "2.4.0" }
+coil = { group = "io.coil-kt", name = "coil", version = "2.5.0" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

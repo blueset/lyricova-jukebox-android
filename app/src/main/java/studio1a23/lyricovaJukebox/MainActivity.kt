@@ -5,8 +5,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateDpAsState
@@ -34,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
@@ -44,7 +47,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.ImageLoader
+import coil.request.ImageRequest
+import coil.util.DebugLogger
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.withContext
 import studio1a23.lyricovaJukebox.data.musicFile.MusicFileRepo
 import studio1a23.lyricovaJukebox.services.PlayerService
 import studio1a23.lyricovaJukebox.ui.constants.AppBarHeight
@@ -57,10 +66,13 @@ import studio1a23.lyricovaJukebox.ui.nav.rememberBottomSheetState
 import studio1a23.lyricovaJukebox.ui.player.Player
 import studio1a23.lyricovaJukebox.ui.player.PlayerConnection
 import studio1a23.lyricovaJukebox.ui.settings.Settings
+import studio1a23.lyricovaJukebox.ui.theme.ColorSaver
 import studio1a23.lyricovaJukebox.ui.theme.JukeboxTheme
+import studio1a23.lyricovaJukebox.ui.theme.extractThemeColor
 import studio1a23.lyricovaJukebox.ui.tracks.Tracks
 import studio1a23.lyricovaJukebox.ui.utils.appBarScrollBehavior
 import studio1a23.lyricovaJukebox.ui.utils.resetHeightOffset
+import studio1a23.lyricovaJukebox.util.TAG
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -87,7 +99,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        startForegroundService(Intent(this, PlayerService::class.java))
+//        startForegroundService(Intent(this, PlayerService::class.java))
+
         bindService(
             Intent(this, PlayerService::class.java),
             serviceConnection,
@@ -109,7 +122,57 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalPlayerConnection provides playerConnection,
             ) {
-                JukeboxTheme {
+                var themeColor by rememberSaveable(stateSaver = ColorSaver) {
+                    mutableStateOf(Color.Unspecified)
+                }
+                LaunchedEffect(playerConnection) {
+                    val playerConnection = playerConnection
+                    if (playerConnection == null) {
+                        themeColor = Color.Unspecified
+                        return@LaunchedEffect
+                    }
+                    playerConnection.service.currentMediaMetadata.collectLatest { currentMetadata ->
+                        Log.d(
+                            TAG,
+                            "Launched effect theme: current metadata changed, ${currentMetadata?.artworkUri}"
+                        )
+                        themeColor = if (currentMetadata?.artworkUri == null) {
+                            Log.d(TAG, "Launched effect theme: color = undefined")
+                            Color.Unspecified
+                        } else {
+                            withContext(Dispatchers.IO) {
+                                Log.d(
+                                    TAG,
+                                    "Launched effect theme: load artwork uri: ${currentMetadata.artworkUri}"
+                                )
+                                try {
+                                    val imageLoader = ImageLoader.Builder(this@MainActivity).logger(
+                                        DebugLogger(Log.VERBOSE)
+                                    ).build()
+                                    val request = ImageRequest.Builder(this@MainActivity)
+                                        .data(currentMetadata.artworkUri)
+                                        .allowHardware(false) // pixel access is not supported on Config#HARDWARE bitmaps
+                                        .build()
+                                    Log.d(TAG, "Launched effect theme: loader = $imageLoader, request = $request");
+                                    val result = imageLoader.execute(request)
+                                    Log.d(TAG, "Launched effect theme: result = $result")
+                                    val bitmap = (result.drawable as? BitmapDrawable)?.bitmap
+                                    val color = bitmap?.extractThemeColor()
+                                    Log.d(
+                                        TAG,
+                                        "Launched effect theme: color = $color, bitmap = $bitmap"
+                                    )
+                                    color ?: Color.Unspecified
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Launched effect theme: error", e)
+                                    Color.Unspecified
+                                }
+                            }
+                        }
+                    }
+                }
+
+                JukeboxTheme(themeColor) {
                     BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxSize()

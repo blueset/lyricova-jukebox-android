@@ -6,7 +6,6 @@ import android.os.Environment
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
@@ -31,9 +30,8 @@ class PlayerConnection (
     val musicFileRepo: MusicFileRepo,
     val scope: CoroutineScope,
 ) : Player.Listener {
-    private val service = binder.service
+    val service = binder.service
     val player = service.player
-    val currentMediaMetadata = MutableStateFlow<MediaMetadata?>(null)
 
     var isPlaying = MutableStateFlow(player.isPlaying)
     val playbackState = MutableStateFlow(player.playbackState)
@@ -49,9 +47,10 @@ class PlayerConnection (
                 val playerObj = controllerFuture.get()
                 playerObj.prepare()
                 playerObj.addListener(this)
-                isPlaying.value = playerObj.isPlaying
-                isPlaying.value = playerObj.isPlaying
-                playbackState.value = playerObj.playbackState
+
+                isPlaying.value = player.isPlaying
+                isPlaying.value = player.isPlaying
+                playbackState.value = player.playbackState
 
 //                viewModelScope.launch {
 //                    while (isActive) {
@@ -120,20 +119,6 @@ class PlayerConnection (
         player.prepare()
         // Start the playback.
         player.play()
-    }
-
-    override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-        currentMediaMetadata.value = mediaMetadata.buildUpon()
-            .setArtworkUri(
-                getCoverArtUri(
-                    mediaMetadata.extras?.getInt("lyricova.musicFileId") ?: return, context
-                )
-            )
-            .build()
-        Log.d(
-            TAG,
-            "onMediaMetadataChanged: $mediaMetadata, ${currentMediaMetadata.value?.artworkUri}"
-        )
     }
 
     override fun onEvents(player: Player, events: Player.Events) {
