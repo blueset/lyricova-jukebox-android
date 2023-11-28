@@ -204,21 +204,20 @@ fun Tracks(
     val openSelectorDialog = remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val musicFiles = viewModel.musicFiles.collectAsState(initial = emptyList())
-    val groups =
-        musicFiles.value.sortedBy { getTrackHeaderLabel(it) }.groupBy { getTrackHeaderLabel(it) }
-    val groupKeys = groups.keys.toList()
+    val groups = viewModel.groupedMusicFiles.collectAsState(initial = emptyMap())
+    val groupKeys = groups.value.keys.toList()
     val groupHeaderIndexes = groupKeys.foldIndexed(mutableMapOf<String, Int>()) { index, map, key ->
         when (index) {
             0 -> map.apply { this[key] = 0 }
             else -> map.apply {
                 this[key] =
-                    (map.getValue(groupKeys[index - 1]) + groups.getValue(groupKeys[index - 1]).size) + 1
+                    (map.getValue(groupKeys[index - 1]) + groups.value.getValue(groupKeys[index - 1]).size) + 1
             }
         }
     }
 
     LazyColumn(modifier, state = listState) {
-        groups.forEach { (label, musicFiles) ->
+        groups.value.forEach { (label, musicFiles) ->
             stickyHeader {
                 TrackHeader(label, modifier = Modifier.clickable {
                     openSelectorDialog.value = true
