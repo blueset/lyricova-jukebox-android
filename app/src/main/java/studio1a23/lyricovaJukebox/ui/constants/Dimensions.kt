@@ -9,4 +9,7 @@ val NavigationBarHeight = 80.dp
 val MiniPlayerHeight = 64.dp
 val AppBarHeight = 64.dp
 
+val ThumbnailCornerRadius = 6.dp
+val PlayerHorizontalPadding = 32.dp
+
 val NavigationBarAnimationSpec = spring<Dp>(stiffness = Spring.StiffnessMediumLow)

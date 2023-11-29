@@ -35,7 +35,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -69,7 +68,7 @@ fun TrackItem(musicFile: MusicFileEntity, onClick: () -> Unit = {}) {
 fun TrackHeader(label: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .background(color = MaterialTheme.colorScheme.surfaceBright)
+            .background(color = MaterialTheme.colorScheme.surfaceContainer)
             .padding(16.dp, 4.dp)
             .fillMaxWidth()
     ) {
@@ -200,10 +199,8 @@ fun Tracks(
     viewModel: TracksViewModel = hiltViewModel<TracksViewModel>(),
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
-    val context = LocalContext.current
     val openSelectorDialog = remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
-    val musicFiles = viewModel.musicFiles.collectAsState(initial = emptyList())
     val groups = viewModel.groupedMusicFiles.collectAsState(initial = emptyMap())
     val groupKeys = groups.value.keys.toList()
     val groupHeaderIndexes = groupKeys.foldIndexed(mutableMapOf<String, Int>()) { index, map, key ->

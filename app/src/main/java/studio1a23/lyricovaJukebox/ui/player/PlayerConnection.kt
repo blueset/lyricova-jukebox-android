@@ -35,6 +35,10 @@ class PlayerConnection (
 
     var isPlaying = MutableStateFlow(player.isPlaying)
     val playbackState = MutableStateFlow(player.playbackState)
+    val canSkipPrevious = MutableStateFlow(true)
+    val canSkipNext = MutableStateFlow(true)
+    val shuffleModeEnabled = MutableStateFlow(false)
+    val repeatMode = MutableStateFlow(Player.REPEAT_MODE_OFF)
 
     init {
         val sessionToken =
@@ -51,6 +55,8 @@ class PlayerConnection (
                 isPlaying.value = player.isPlaying
                 isPlaying.value = player.isPlaying
                 playbackState.value = player.playbackState
+                shuffleModeEnabled.value = player.shuffleModeEnabled
+                repeatMode.value = player.repeatMode
 
 //                viewModelScope.launch {
 //                    while (isActive) {
@@ -140,6 +146,48 @@ class PlayerConnection (
             isPlaying.value = player.isPlaying
         }
         super.onEvents(player, events)
+    }
+
+    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+//        currentMediaItemIndex.value = player.currentMediaItemIndex
+//        currentWindowIndex.value = player.getCurrentQueueIndex()
+        updateCanSkipPreviousAndNext()
+    }
+
+    override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+//        queueWindows.value = player.getQueueWindows()
+//        queueTitle.value = service.queueTitle
+//        currentMediaItemIndex.value = player.currentMediaItemIndex
+//        currentWindowIndex.value = player.getCurrentQueueIndex()
+        updateCanSkipPreviousAndNext()
+    }
+
+    override fun onShuffleModeEnabledChanged(enabled: Boolean) {
+        shuffleModeEnabled.value = enabled
+//        queueWindows.value = player.getQueueWindows()
+//        currentWindowIndex.value = player.getCurrentQueueIndex()
+        updateCanSkipPreviousAndNext()
+    }
+
+    override fun onRepeatModeChanged(mode: Int) {
+        repeatMode.value = mode
+        updateCanSkipPreviousAndNext()
+    }
+
+    private fun updateCanSkipPreviousAndNext() {
+        if (!player.currentTimeline.isEmpty) {
+            // Current timeline window
+            val window = player.currentTimeline.getWindow(player.currentMediaItemIndex, Timeline.Window())
+            // Can seek + not livestream + can go to prev
+            canSkipPrevious.value = player.isCommandAvailable(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+                    || !window.isLive()
+                    || player.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+            canSkipNext.value = window.isLive() && window.isDynamic
+                    || player.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+        } else {
+            canSkipPrevious.value = false
+            canSkipNext.value = false
+        }
     }
 
     @OptIn(ExperimentalStdlibApi::class)

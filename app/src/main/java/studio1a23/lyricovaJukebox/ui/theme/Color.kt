@@ -106,5 +106,13 @@ fun Color.toColorScheme(isDark: Boolean, style: PaletteStyle = PaletteStyle.Vibr
         surfaceVariant = Color(colors.surfaceVariant().getArgb(scheme)),
         tertiary = Color(colors.tertiary().getArgb(scheme)),
         tertiaryContainer = Color(colors.tertiaryContainer().getArgb(scheme))
+    ).copy(
+        surfaceBright = Color(colors.surfaceBright().getArgb(scheme)),
+        surfaceDim = Color(colors.surfaceDim().getArgb(scheme)),
+        surfaceContainer = Color(colors.surfaceContainer().getArgb(scheme)),
+        surfaceContainerHigh = Color(colors.surfaceContainerHigh().getArgb(scheme)),
+        surfaceContainerHighest = Color(colors.surfaceContainerHighest().getArgb(scheme)),
+        surfaceContainerLow = Color(colors.surfaceContainerLow().getArgb(scheme)),
+        surfaceContainerLowest = Color(colors.surfaceContainerLowest().getArgb(scheme)),
     )
 }
